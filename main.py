@@ -1,5 +1,6 @@
 import datetime
 from fpdf import FPDF
+from appJar import gui
 # datę wystawienia,
 # kolejny numer faktury zgodny z przyjętą numeracją,
 # imiona i nazwiska lub nazwę sprzedawcy i nabywcy towaru/usługi oraz ich adresy,
@@ -41,13 +42,48 @@ class Invoice:
     product = {}
     list_of_products = []
 
+    def save_to_pdf(self):
+        self.pdf.add_page()
+        self.pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
+        self.pdf.set_font('DejaVu', '', 14)
+        f = self.__str__()
+        self.pdf.write(10, txt=f)
+        self.pdf.output("Test.pdf")
+
+    app = gui("Text Window", "800x400")
+
+    app.addLabel("title", "Dodaj fakturę")
+    app.addEntry('seller')
+    app.addEntry('buyer')
+    app.addEntry('seller_nip')
+    app.addEntry('buyer_nip')
+    app.addEntry('product_name')
+    app.addEntry('quantity')
+    app.addEntry('cost')
+    app.addEntry('rate')
+    app.setEntryDefault("seller", "Imię i nazwisko sprzedawcy")
+    app.setEntryDefault("buyer", "Imię i nazwisko nabywcy")
+    app.setEntryDefault("seller_nip", "NIP sprzedawcy")
+    app.setEntryDefault("buyer_nip", "NIP nabywcy")
+    app.setEntryDefault("product_name", "Nazwa produktu/usługi")
+    app.setEntryDefault("quantity", "Ilość")
+    app.setEntryDefault("cost", "Cena jednostkowa")
+    app.setEntryDefault("rate", "Podatek")
+    app.setPadding([40, 20])
+
 
     def products(self):
         print("Dodawanie produktu/usługi")
-        self.product = {"name": input("Podaj nazwę produktu/usługi: "),
-                        "quantity": input("Podaj ilość: "),
-                        "cost": input("Podaj cene jednostkową: "),
-                        "rate": input("Podaj wysokość podatku: "),
+        # self.product = {"name": input("Podaj nazwę produktu/usługi: "),
+        #                 "quantity": input("Podaj ilość: "),
+        #                 "cost": input("Podaj cene jednostkową: "),
+        #                 "rate": input("Podaj wysokość podatku: "),
+        #                 "netto": 0,
+        #                 "brutto": 0}
+        self.product = {"name": self.app.getEntry('product_name'),
+                        "quantity": self.app.getEntry('quantity'),
+                        "cost": self.app.getEntry('cost'),
+                        "rate": self.app.getEntry('rate'),
                         "netto": 0,
                         "brutto": 0}
         self.product['netto'] = float(self.product['quantity'])*float(self.product['cost'])
@@ -60,10 +96,15 @@ class Invoice:
     def __init__(self):
         self.gen = Generator.generator_1(self)
         self.invoice_number = next(self.gen)
-        self.seller = input("Podaj imię i nazwisko sprzedawcy: ")
-        self.buyer = input("Podaj imię i nazwisko nabywcy: ")
-        self.seller_nip = input("Podaj nip sprzedawcy: ")
-        self.buyer_nip = input("Podaj nip nabywcy: ")
+        # self.seller = input("Podaj imię i nazwisko sprzedawcy: ")
+        # self.buyer = input("Podaj imię i nazwisko nabywcy: ")
+        # self.seller_nip = input("Podaj nip sprzedawcy: ")
+        # self.buyer_nip = input("Podaj nip nabywcy: ")
+        self.seller = self.app.getEntry('seller')
+        self.buyer = self.app.getEntry('buyer')
+        self.seller_nip = self.app.getEntry('seller_nip')
+        self.buyer_nip = self.app.getEntry('buyer_nip')
+
 
         while self.z == "TAK":
             self.products()
@@ -78,13 +119,7 @@ class Invoice:
                Netto: {item['netto']}zł \
                Brutto: {item['brutto']}zł"""
 
-    def save_to_pdf(self):
-        self.pdf.add_page()
-        self.pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
-        self.pdf.set_font('DejaVu', '', 14)
-        f = self.__str__()
-        self.pdf.write(10, txt=f)
-        self.pdf.output("Test.pdf")
+
 
     def __str__(self):
         msg =  f"""Numer faktury: {self.invoice_number}
@@ -102,26 +137,10 @@ class Invoice:
 
 
 
-
-
+# faktura1.save_to_pdf()
+Invoice.app.go()
 faktura1 = Invoice()
 print(faktura1)
-faktura1.save_to_pdf()
 
-
-
-# lista2 = [{"cena": 1235, "ilość": 2000}]
-# element = {"cena": 123,
-#            "ilość": 10}
-# element2 = {"cena": 133,
-#            "ilość": 15}
-# lista = ['a', 'b', 'c']
-# lista2.append(element)
-# lista2.append(element2)
-# # for product in lista:
-# #     print(f"{product['cena']}"
-# #           f"{product['ilość']}")
-#
-# print([f"{item['cena']}" for item in lista2])
 
 
