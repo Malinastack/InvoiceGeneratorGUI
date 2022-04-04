@@ -76,11 +76,6 @@ class Invoice(tk.Frame):
     buyer = ""
     seller_nip = ""
     buyer_nip = ""
-    payment_brutto = 0
-    payment_netto = 0
-    tax = 0
-    product = {}
-    list_of_products = []
 
     def save_to_pdf(self):
         self.pdf.add_page()
@@ -89,55 +84,6 @@ class Invoice(tk.Frame):
         f = self.__str__()
         self.pdf.write(10, txt=f)
         self.pdf.output("Test.pdf")
-
-    def products(self):
-        self.product = {"name": self.product['name'].get(),
-                        "quantity": self.product['quantity'].get(),
-                        "cost": self.product['cost'].get(),
-                        "rate": self.product['rate'].get(),
-                        "netto": 0,
-                        "brutto": 0}
-        self.product['netto'] = float(self.product['quantity'])*float(self.product['cost'])
-        self.product['brutto'] = float(self.product['netto'])+float(self.product['netto'])*(float(self.product['rate'])/100)
-        self.payment_brutto += self.product['brutto']
-        self.payment_netto += self.product['netto']
-        self.tax = (float(self.payment_brutto))-(float(self.payment_netto))
-        self.list_of_products.append(self.product)
-        window = tk.Toplevel()
-
-        label = tk.Label(window, text="Poprawnie dodano produkt/usługe!")
-        label.pack(fill='x', padx=50, pady=5)
-
-        button_close = tk.Button(window, text="Close", command=window.destroy)
-        button_close.pack(fill='x')
-
-    def product_window(self):
-        self.product = {"name": StringVar(),
-                        "quantity": StringVar(),
-                        "cost": StringVar(),
-                        "rate": StringVar(),
-                        "netto": 0,
-                        "brutto": 0}
-        window = tk.Toplevel()
-
-        label5 = ttk.Label(window, text='Nazwa produktu/usługi:')
-        label5.grid(column=0, row=12)
-        label6 = ttk.Label(window, text='Ilość:')
-        label6.grid(column=0, row=14)
-        label7 = ttk.Label(window, text='Cena jednostkowa:')
-        label7.grid(column=0, row=16)
-        label8 = ttk.Label(window, text='Wysokość podatku:')
-        label8.grid(column=0, row=18)
-        product_name = tk.Entry(window, width=50, textvariable=self.product['name'])
-        product_name.grid(column=0, row=13)
-        quantity = tk.Entry(window, width=50, textvariable=self.product['quantity'])
-        quantity.grid(column=0, row=15)
-        product_cost = tk.Entry(window, width=50, textvariable=self.product['cost'])
-        product_cost.grid(column=0, row=17)
-        product_rate = tk.Entry(window, width=50, textvariable=self.product['rate'])
-        product_rate.grid(column=0, row=19)
-        button1 = ttk.Button(window, text="Zapisz", command=lambda: [self.products(), window.destroy()])
-        button1.grid(column=0, row=20)
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -172,8 +118,47 @@ class Invoice(tk.Frame):
         button1.grid(row=9, column=1)
         button2 = ttk.Button(content, text="Save to PDF", command=self.save_to_pdf)
         button2.grid(column=1, row=2)
-        button3 = ttk.Button(content, text="Dodaj", command=self.product_window)
-        button3.grid(column=1, row=10)
+
+
+    def __str__(self):
+        msg =  f"""Numer faktury: {self.invoice_number}
+               Imię i nazwisko sprzedawcy: {self.seller.get()}
+               Imię i nazwisko nabywcy: {self.buyer.get()}
+               NIP sprzedawcy: {self.seller_nip.get()}
+               NIP nabywcy: {self.buyer_nip.get()}"""
+        return msg
+
+
+class Product(tk.Frame):
+    pdf = FPDF()
+    product = {}
+    list_of_products = []
+    my_listbox = 0
+    payment_brutto = 0
+    payment_netto = 0
+    tax = 0
+
+    def products(self):
+        self.product = {"name": self.product['name'].get(),
+                        "quantity": self.product['quantity'].get(),
+                        "cost": self.product['cost'].get(),
+                        "rate": self.product['rate'].get(),
+                        "netto": 0,
+                        "brutto": 0,
+                        }
+        self.product['netto'] = float(self.product['quantity'])*float(self.product['cost'])
+        self.product['brutto'] = float(self.product['netto'])+float(self.product['netto'])*(float(self.product['rate'])/100)
+        self.payment_brutto += self.product['brutto']
+        self.payment_netto += self.product['netto']
+        self.tax = (float(self.payment_brutto))-(float(self.payment_netto))
+        self.list_of_products.append(self.product)
+        window = tk.Toplevel()
+
+        label = tk.Label(window, text="Poprawnie dodano produkt/usługe!")
+        label.pack(fill='x', padx=50, pady=5)
+
+        button_close = tk.Button(window, text="Close", command=window.destroy)
+        button_close.pack(fill='x')
 
     def generate_item_list(self, item):
         return f"""Nazwa towaru/usługi: {item['name']} \
@@ -183,50 +168,69 @@ class Invoice(tk.Frame):
                Netto: {item['netto']}zł \
                Brutto: {item['brutto']}zł"""
 
-    def __str__(self):
-        msg =  f"""Numer faktury: {self.invoice_number}
-               Imię i nazwisko sprzedawcy: {self.seller.get()}
-               Imię i nazwisko nabywcy: {self.buyer.get()}
-               NIP sprzedawcy: {self.seller_nip.get()}
-               NIP nabywcy: {self.buyer_nip.get()}
-               Lista towarów:
-               {[self.generate_item_list(item) for item in self.list_of_products]}
-               Całkowita wartość brutto: {round(self.payment_brutto, 2)}zł
-               Całkowita wartość netto: {round(self.payment_netto, 2)}zł
-               Wartość podatku: {round(self.tax, 2)}zł\n"""
-        return msg
+    def add_product(self, listbox):
+        listbox.insert('end', self.list_of_products[-1]['name'])
 
+    def save_to_pdf(self):
+        Invoice.pdf.add_page()
+        Invoice.pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
+        Invoice.pdf.set_font('DejaVu', '', 14)
+        f = self.__str__()
+        Invoice.pdf.write(10, txt=f)
+        Invoice.pdf.output("Test.pdf")
 
-class Product(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        content = ttk.Frame(self,  borderwidth=5)
-        content.grid(column=0, row=0)
+    def product_window(self):
         self.product = {"name": StringVar(),
                         "quantity": StringVar(),
                         "cost": StringVar(),
                         "rate": StringVar(),
                         "netto": 0,
                         "brutto": 0}
+        self.payment_brutto = 0
+        self.payment_netto = 0
+        self.tax = 0
+        window = tk.Toplevel()
 
-        label5 = ttk.Label(content, text='Nazwa produktu/usługi:')
+        label5 = ttk.Label(window, text='Nazwa produktu/usługi:')
         label5.grid(column=0, row=12)
-        label6 = ttk.Label(content, text='Ilość:')
+        label6 = ttk.Label(window, text='Ilość:')
         label6.grid(column=0, row=14)
-        label7 = ttk.Label(content, text='Cena jednostkowa:')
+        label7 = ttk.Label(window, text='Cena jednostkowa:')
         label7.grid(column=0, row=16)
-        label8 = ttk.Label(content, text='Wysokość podatku:')
+        label8 = ttk.Label(window, text='Wysokość podatku:')
         label8.grid(column=0, row=18)
-        product_name = tk.Entry(content, width=50, textvariable=self.product['name'])
+        product_name = tk.Entry(window, width=50, textvariable=self.product['name'])
         product_name.grid(column=0, row=13)
-        quantity = tk.Entry(content, width=50, textvariable=self.product['quantity'])
+        quantity = tk.Entry(window, width=50, textvariable=self.product['quantity'])
         quantity.grid(column=0, row=15)
-        product_cost = tk.Entry(content, width=50, textvariable=self.product['cost'])
+        product_cost = tk.Entry(window, width=50, textvariable=self.product['cost'])
         product_cost.grid(column=0, row=17)
-        product_rate = tk.Entry(content, width=50, textvariable=self.product['rate'])
+        product_rate = tk.Entry(window, width=50, textvariable=self.product['rate'])
         product_rate.grid(column=0, row=19)
-        button1 = ttk.Button(content, text="Zapisz", command=lambda: [content.destroy()])
+        button1 = ttk.Button(window, text="Zapisz", command=lambda: [self.products(), self.add_product(self.my_listbox), window.destroy()])
         button1.grid(column=0, row=20)
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        content = ttk.Frame(self,  borderwidth=5)
+        content.grid(column=0, row=0)
+        self.my_listbox = Listbox(content)
+        self.my_listbox.grid(column=1, row=0)
+        button1 = ttk.Button(content, text="Dodaj", command=self.product_window)
+        button1.grid(column=1, row=20)
+        button2 = ttk.Button(content, text="Wróc", command=lambda: [controller.show_frame(Invoice)])
+        button2.grid(column=2, row=20)
+        button3 = ttk.Button(content, text="Save to PDF", command=lambda: [self.save_to_pdf()])
+        button3.grid(column=3, row=20)
+
+    def __str__(self):
+        msg = f"""
+                {[self.generate_item_list(item) for item in self.list_of_products]}
+                Całkowita wartość brutto: {round(self.payment_brutto, 2)}zł
+                Całkowita wartość netto: {round(self.payment_netto, 2)}zł
+                Wartość podatku: {round(self.tax, 2)}zł\n"""
+        return msg
+
 
 app = TkinterApp()
 app.mainloop()
