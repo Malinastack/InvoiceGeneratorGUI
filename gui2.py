@@ -10,6 +10,8 @@ class Generator:
             yield f"FV/{i}/{x.year}/{x.month}"
             i += 1
 
+#a
+
 
 class MainFrame(tk.Tk):
     def __init__(self, *args, **kwargs):
