@@ -1,6 +1,5 @@
 import tkinter as tk
 import datetime
-from tkinter import ttk
 
 
 class Generator:
@@ -13,7 +12,6 @@ class Generator:
 
 
 class MainFrame(tk.Tk):
-
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
@@ -22,13 +20,13 @@ class MainFrame(tk.Tk):
 
         self.listing = {}
 
-        for p in (WelcomePage, PageOne, InvoiceForm):
+        for p in (WelcomePage, InvoiceForm):
             page_name = p.__name__
-            frame = p(parent=container, controller=self) #controller jest używany w innych klasach jako self tej klasy
+            frame = p(parent=container, controller=self)
             frame.grid(row=0, column=0, sticky="nesw", pady=20, padx=20)
             self.listing[page_name] = frame
 
-        self.up_frame('WelcomePage')
+        self.up_frame("WelcomePage")
 
     def up_frame(self, page_name):
         page = self.listing[page_name]
@@ -40,22 +38,22 @@ class WelcomePage(tk.Frame):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Generator faktur \n")
         label.pack()
-
-        button = tk.Button(self, text="To page 1", command=lambda: controller.up_frame("PageOne"))
-        button.pack()
-        button2 = tk.Button(self, text="To Invoice form", command=lambda: controller.up_frame("InvoiceForm"))
+        button2 = tk.Button(
+            self,
+            text="To Invoice form",
+            command=lambda: controller.up_frame("InvoiceForm"),
+        )
         button2.pack()
 
 
-class PageOne(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-
-        label = tk.Label(self, text="PageOne \n")
-        label.pack()
-
-        button = tk.Button(self, text="To Welcome Page", command=lambda: controller.up_frame("WelcomePage"))
-        button.pack()
+def generate_item_list(product):
+    return f"""
+       Nazwa towaru/usługi: {product['name']} 
+       Ilość: {product['quantity']} 
+       Cena jednostkowa: {product['cost']}zł 
+       Wysokość podatku: {product['rate']}% 
+       Netto: {product['netto']}zł 
+       Brutto: {product['brutto']}zł"""
 
 
 class InvoiceForm(tk.Frame):
@@ -82,16 +80,25 @@ class InvoiceForm(tk.Frame):
         self.buyer_nip_entry = tk.Entry(self, width=40)
         self.buyer_nip_entry.grid(row=7, column=0)
 
-        button = tk.Button(self, text="Submit", command=lambda: self.submit(), width=20, bg="#67767E")
+        button = tk.Button(
+            self, text="Submit", command=lambda: self.submit(), width=20, bg="#67767E"
+        )
         button.grid(row=8, column=0, pady=10)
 
-        self.listbox = tk.Listbox(self, bg="#f7ffde", width=40, font=('Arial', 10))
+        self.listbox = tk.Listbox(self, bg="#f7ffde", width=40, font=("Arial", 10))
         self.listbox.grid(row=9, column=0)
 
-        button = tk.Button(self, text="Add product", command=lambda: self.invoice_product_window(), width=20, bg="#67767E")
+        button = tk.Button(
+            self,
+            text="Add product",
+            command=lambda: self.invoice_product_window(),
+            width=20,
+            bg="#67767E",
+        )
         button.grid(row=8, column=0, pady=10)
-        button = tk.Button(self, text="Submit", command=lambda: self.submit(), width=20,
-                           bg="#67767E")
+        button = tk.Button(
+            self, text="Submit", command=lambda: self.submit(), width=20, bg="#67767E"
+        )
         button.grid(row=10, column=0, pady=10)
 
         self.gen = Generator.generator_1(self)
@@ -129,7 +136,13 @@ class InvoiceForm(tk.Frame):
         self.product_rate_entry = tk.Entry(product_window, width=40)
         self.product_rate_entry.grid(row=7, column=0)
 
-        button = tk.Button(product_window, text="Submit", command=lambda: self.add_product(), width=20, bg="#67767E")
+        button = tk.Button(
+            product_window,
+            text="Submit",
+            command=lambda: [self.add_product(), self.add_to_listbox(self.listbox)],
+            width=20,
+            bg="#67767E",
+        )
         button.grid(row=8, column=0, pady=10)
 
         product_window.mainloop()
@@ -146,9 +159,13 @@ class InvoiceForm(tk.Frame):
         self.product["netto"] = float(self.product["quantity"]) * float(
             self.product["cost"]
         )
-        self.product["brutto"] = float(self.product["netto"]) + \
-            float(self.product["netto"]) * (float(self.product["rate"]) / 100)
+        self.product["brutto"] = float(self.product["netto"]) + float(
+            self.product["netto"]
+        ) * (float(self.product["rate"]) / 100)
         self.list_of_products.append(self.product)
+
+    def add_to_listbox(self, listbox):
+        listbox.insert("end", self.list_of_products[-1]["name"])
 
     def submit(self):
         self.seller_name = self.seller_name_entry.get()
@@ -156,7 +173,6 @@ class InvoiceForm(tk.Frame):
         self.seller_nip = self.seller_nip_entry.get()
         self.buyer_nip = self.buyer_nip_entry.get()
         print(self.__str__())
-        print(self.list_of_products)
 
     def __str__(self):
         msg = f"""Numer faktury: {self.invoice_number}
@@ -164,9 +180,11 @@ class InvoiceForm(tk.Frame):
         Imię i nazwisko nabywcy: {self.buyer_name}
         NIP sprzedawcy: {self.seller_nip}
         NIP nabywcy: {self.buyer_nip}"""
-        return msg
+        msg2 = "\n".join(
+            [generate_item_list(product) for product in self.list_of_products]
+        )
+        return msg + msg2
 
 
 app = MainFrame()
 app.mainloop()
-
